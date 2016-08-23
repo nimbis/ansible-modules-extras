@@ -74,8 +74,8 @@ options:
     description:
       - "Chain to operate on. This option can either be the name of a user
         defined chain or any of the builtin chains: 'INPUT', 'FORWARD',
-        'OUTPUT', 'PREROUTING', 'POSTROUTING', 'SECMARK', 'CONNSECMARK'"
-    required: true
+        'OUTPUT', 'PREROUTING', 'POSTROUTING', 'SECMARK', 'CONNSECMARK'."
+    required: false
   protocol:
     description:
       - The protocol of the rule or of the packet to check. The specified
@@ -272,6 +272,13 @@ options:
         type/code pair, or one of the ICMP type names shown by the command
         'iptables -p icmp -h'"
     required: false
+  flush:
+    version_added: "2.2"
+    description:
+      - "Flushes the specified table and chain of all rules. If no chain is
+        specified then the entire table is purged. Ignores all other
+        parameters.
+    required: false
 '''
 
 EXAMPLES = '''
@@ -353,11 +360,12 @@ def construct_rule(params):
     return rule
 
 
-def push_arguments(iptables_path, action, params):
+def push_arguments(iptables_path, action, params, make_rule=True):
     cmd = [iptables_path]
     cmd.extend(['-t', params['table']])
     cmd.extend([action, params['chain']])
-    cmd.extend(construct_rule(params))
+    if make_rule:
+        cmd.extend(construct_rule(params))
     return cmd
 
 
@@ -382,6 +390,11 @@ def remove_rule(iptables_path, module, params):
     module.run_command(cmd, check_rc=True)
 
 
+def flush_table(iptables_path, module, params):
+    cmd = push_arguments(iptables_path, '-F', params, make_rule=False)
+    module.run_command(cmd, check_rc=True)
+
+
 def main():
     module = AnsibleModule(
         supports_check_mode=True,
@@ -390,7 +403,7 @@ def main():
             state=dict(required=False, default='present', choices=['present', 'absent']),
             action=dict(required=False, default='append', type='str', choices=['append', 'insert']),
             ip_version=dict(required=False, default='ipv4', choices=['ipv4', 'ipv6']),
-            chain=dict(required=True, default=None, type='str'),
+            chain=dict(required=False, default=None, type='str'),
             protocol=dict(required=False, default=None, type='str'),
             source=dict(required=False, default=None, type='str'),
             to_source=dict(required=False, default=None, type='str'),
@@ -415,6 +428,7 @@ def main():
             uid_owner=dict(required=False, default=None, type='str'),
             reject_with=dict(required=False, default=None, type='str'),
             icmp_type=dict(required=False, default=None, type='str'),
+            flush=dict(required=False, default=False, type='bool'),
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
@@ -426,12 +440,25 @@ def main():
         ip_version=module.params['ip_version'],
         table=module.params['table'],
         chain=module.params['chain'],
+        flush=module.params['flush'],
         rule=' '.join(construct_rule(module.params)),
         state=module.params['state'],
     )
-    insert = (module.params['action'] == 'insert')
+
     ip_version = module.params['ip_version']
     iptables_path = module.get_bin_path(BINS[ip_version], True)
+
+    # Check if chain option is required
+    if args['flush'] is False and args['chain'] is None:
+        module.fail_json(
+            msg="Either chain or flush parameter must be specified.")
+
+    # Flush the table
+    if args['flush'] is True:
+        flush_table(iptables_path, module, module.params)
+        module.exit_json(**args)
+
+    insert = (module.params['action'] == 'insert')
     rule_is_present = check_present(iptables_path, module, module.params)
     should_be_present = (args['state'] == 'present')
 
