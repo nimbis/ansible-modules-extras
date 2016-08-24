@@ -279,6 +279,13 @@ options:
         specified then the entire table is purged. Ignores all other
         parameters.
     required: false
+  policy:
+    version_added: "2.2"
+    description:
+      - "Set the policy for the chain to the given target. Valid targets are
+        ACCEPT, DROP, QUEUE, RETURN. Only built in chains can have policies.
+        This parameter requires the chain parameter. Ignores all other
+        parameters."
 '''
 
 EXAMPLES = '''
@@ -395,6 +402,12 @@ def flush_table(iptables_path, module, params):
     module.run_command(cmd, check_rc=True)
 
 
+def set_chain_policy(iptables_path, module, params):
+    cmd = push_arguments(iptables_path, '-P', params, make_rule=False)
+    cmd.append(params['policy'])
+    module.run_command(cmd, check_rc=True)
+
+
 def main():
     module = AnsibleModule(
         supports_check_mode=True,
@@ -429,6 +442,11 @@ def main():
             reject_with=dict(required=False, default=None, type='str'),
             icmp_type=dict(required=False, default=None, type='str'),
             flush=dict(required=False, default=False, type='bool'),
+            policy=dict(
+                required=False,
+                default=None,
+                type='str',
+                choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
@@ -456,6 +474,11 @@ def main():
     # Flush the table
     if args['flush'] is True:
         flush_table(iptables_path, module, module.params)
+        module.exit_json(**args)
+
+    # Set the policy
+    if module.params['policy']:
+        set_chain_policy(iptables_path, module, module.params)
         module.exit_json(**args)
 
     insert = (module.params['action'] == 'insert')
