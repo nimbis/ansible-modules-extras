@@ -240,13 +240,18 @@ options:
     default: null
   ctstate:
     description:
-      - "ctstate is a list of the connection states to match in the conntrack module.
-        Possible states are: 'INVALID', 'NEW', 'ESTABLISHED', 'RELATED', 'UNTRACKED', 'SNAT', 'DNAT'"
+      - "ctstate is a list of the connection states to match in the conntrack
+        module.
+        Possible states are: 'INVALID', 'NEW', 'ESTABLISHED', 'RELATED',
+        'UNTRACKED', 'SNAT', 'DNAT'"
     required: false
     default: []
   limit:
     description:
-      - "Specifies the maximum average number of matches to allow per second. The number can specify units explicitly, using `/second', `/minute', `/hour' or `/day', or parts of them (so `5/second' is the same as `5/s')."
+      - "Specifies the maximum average number of matches to allow per second.
+        The number can specify units explicitly, using `/second', `/minute',
+        `/hour' or `/day', or parts of them (so `5/second' is the same as
+        `5/s')."
     required: false
     default: null
   limit_burst:
@@ -268,9 +273,9 @@ options:
   icmp_type:
     version_added: "2.2"
     description:
-      - "This allows specification of the ICMP type, which can be a numeric ICMP type,
-        type/code pair, or one of the ICMP type names shown by the command
-        'iptables -p icmp -h'"
+      - "This allows specification of the ICMP type, which can be a numeric
+        ICMP type, type/code pair, or one of the ICMP type names shown by the
+        command 'iptables -p icmp -h'"
     required: false
   flush:
     version_added: "2.2"
@@ -351,7 +356,11 @@ def construct_rule(params):
     append_param(rule, params['destination_port'], '--destination-port', False)
     append_param(rule, params['to_ports'], '--to-ports', False)
     append_param(rule, params['set_dscp_mark'], '--set-dscp', False)
-    append_param(rule, params['set_dscp_mark_class'], '--set-dscp-class', False)
+    append_param(
+        rule,
+        params['set_dscp_mark_class'],
+        '--set-dscp-class',
+        False)
     append_match(rule, params['comment'], 'comment')
     append_param(rule, params['comment'], '--comment', False)
     append_match(rule, params['ctstate'], 'state')
@@ -412,10 +421,23 @@ def main():
     module = AnsibleModule(
         supports_check_mode=True,
         argument_spec=dict(
-            table=dict(required=False, default='filter', choices=['filter', 'nat', 'mangle', 'raw', 'security']),
-            state=dict(required=False, default='present', choices=['present', 'absent']),
-            action=dict(required=False, default='append', type='str', choices=['append', 'insert']),
-            ip_version=dict(required=False, default='ipv4', choices=['ipv4', 'ipv6']),
+            table=dict(
+                required=False,
+                default='filter',
+                choices=['filter', 'nat', 'mangle', 'raw', 'security']),
+            state=dict(
+                required=False,
+                default='present',
+                choices=['present', 'absent']),
+            action=dict(
+                required=False,
+                default='append',
+                type='str',
+                choices=['append', 'insert']),
+            ip_version=dict(
+                required=False,
+                default='ipv4',
+                choices=['ipv4', 'ipv6']),
             chain=dict(required=False, default=None, type='str'),
             protocol=dict(required=False, default=None, type='str'),
             source=dict(required=False, default=None, type='str'),
@@ -432,8 +454,8 @@ def main():
             source_port=dict(required=False, default=None, type='str'),
             destination_port=dict(required=False, default=None, type='str'),
             to_ports=dict(required=False, default=None, type='str'),
-            set_dscp_mark=dict(required=False,default=None, type='str'),
-            set_dscp_mark_class=dict(required=False,default=None, type='str'),
+            set_dscp_mark=dict(required=False, default=None, type='str'),
+            set_dscp_mark_class=dict(required=False, default=None, type='str'),
             comment=dict(required=False, default=None, type='str'),
             ctstate=dict(required=False, default=[], type='list'),
             limit=dict(required=False, default=None, type='str'),
@@ -493,7 +515,7 @@ def main():
         module.exit_json(changed=args['changed'])
 
     # Target is already up to date
-    if args['changed'] == False:
+    if args['changed'] is False:
         module.exit_json(**args)
 
     if should_be_present:
