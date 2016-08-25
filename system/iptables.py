@@ -282,7 +282,7 @@ options:
     description:
       - "Flushes the specified table and chain of all rules. If no chain is
         specified then the entire table is purged. Ignores all other
-        parameters.
+        parameters."
     required: false
   policy:
     version_added: "2.2"
