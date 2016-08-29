@@ -472,6 +472,7 @@ def main():
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
+            ['flush', 'policy'],
         ),
     )
     args = dict(
